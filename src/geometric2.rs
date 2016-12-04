@@ -1,4 +1,5 @@
 use alga::general::{AbstractMagma, AbstractModule, Field, Identity, Inverse, Additive, Multiplicative};
+use num::{Zero, One};
 
 use std::ops::{Add, Mul, Neg};
 
@@ -61,6 +62,16 @@ impl<F: Field> Add for Geometric2<F> {
         self.b1.1 += lhs.b1.1;
         self.b2 += lhs.b2;
         self
+    }
+}
+
+impl<F: Field> Zero for Geometric2<F> {
+    fn zero() -> Self {
+        Self::zero()
+    }
+
+    fn is_zero(&self) -> bool {
+        self.clone() == Self::zero()
     }
 }
 
@@ -131,6 +142,12 @@ impl<F: Field> Mul<Geometric2<F>> for Geometric2<F> {
             b1: (p1, p2),
             b2: p3,
         }
+    }
+}
+
+impl<F: Field> One for Geometric2<F> {
+    fn one() -> Self {
+        Self::one()
     }
 }
 
