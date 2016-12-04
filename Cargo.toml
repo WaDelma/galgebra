@@ -1,0 +1,8 @@
+[package]
+name = "galgebra"
+version = "0.1.0"
+authors = ["Wadelma <delma@del.ma>"]
+
+[dependencies]
+num-traits = "*"
+alga = "*"
