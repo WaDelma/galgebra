@@ -6,3 +6,6 @@ authors = ["Wadelma <delma@del.ma>"]
 [dependencies]
 num-traits = "*"
 alga = "*"
+typenum = "1.4"
+generic-array = "0.2"
+alga_derive = { git = "https://github.com/WaDelma/alga" }

@@ -1,8 +1,15 @@
+//#![recursion_limit="128"]
 extern crate num_traits as num;
 #[macro_use]
 extern crate alga;
+#[macro_use]
+extern crate alga_derive;
+extern crate typenum;
+extern crate generic_array;
 
 use alga::general::Operator;
+
+pub mod generic;
 
 pub mod geometric2;
 // pub mod geometric3;
