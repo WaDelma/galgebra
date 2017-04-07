@@ -4,15 +4,24 @@ use generic_array::{GenericArray, ArrayLength};
 
 use num::Zero;
 
-use alga::general::{AbstractMagma, Additive};
+use alga::general::{AbstractMagma, AbstractModule, Additive, Inverse, Identity};
 
-use std::ops::{Index, Add};
+use std::ops::{Index, Add, Mul, Neg};
 
+// TODO: This should derive AbelianGroup, but for some reason it fails.
 #[derive(Alga)]
-#[alga_traits(Semigroup(Additive), Where = "U2: Pow<N>, <U2 as Pow<N>>::Output: ArrayLength<f64>")]
-pub struct Multivector<N: Unsigned>(GenericArray<f64, <U2 as Pow<N>>::Output>)
-    where U2: Pow<N>,
-          <U2 as Pow<N>>::Output: ArrayLength<f64>;
+#[alga_traits(
+    Semigroup(Additive),
+      Where = "
+        N: Unsigned,
+        U2: Pow<N>,
+        <U2 as Pow<N>>::Output: ArrayLength<f64>"
+)]
+pub struct Multivector<N>(GenericArray<f64, <U2 as Pow<N>>::Output>)
+  where
+    N: Unsigned,
+    U2: Pow<N>,
+    <U2 as Pow<N>>::Output: ArrayLength<f64>;
 
 // TODO: This should work, but it just breaks.
 // impl<N: Unsigned> Multivector<N>
@@ -24,16 +33,36 @@ pub struct Multivector<N: Unsigned>(GenericArray<f64, <U2 as Pow<N>>::Output>)
 //     }
 // }
 
-pub fn from_slice<N: Unsigned>(data: &[f64]) -> Multivector<N>
+pub fn from_slice<N>(data: &[f64]) -> Multivector<N>
   where
+    N: Unsigned,
     U2: Pow<N>,
     <U2 as Pow<N>>::Output: ArrayLength<f64>,
 {
     Multivector::<N>(GenericArray::<f64, <U2 as Pow<N>>::Output>::from_slice(data))
 }
 
-impl<N: Unsigned> Clone for Multivector<N>
+
+impl<N> Multivector<N>
   where
+    N: Unsigned,
+    U2: Pow<N>,
+    <U2 as Pow<N>>::Output: ArrayLength<f64>,
+{
+    pub fn dims() -> usize {
+        <U2 as Pow<N>>::Output::to_usize()
+    }
+}
+
+// #[test]
+// fn dims_works() {
+//     use typenum::U2;
+//     assert_eq!(4, Multivector::<U2>::default().dims());
+// }
+
+impl<N> Clone for Multivector<N>
+  where
+    N: Unsigned,
     U2: Pow<N>,
     <U2 as Pow<N>>::Output: ArrayLength<f64>,
 {
@@ -42,8 +71,9 @@ impl<N: Unsigned> Clone for Multivector<N>
     }
 }
 
-impl<N: Unsigned> PartialEq for Multivector<N>
+impl<N> PartialEq for Multivector<N>
   where
+    N: Unsigned,
     U2: Pow<N>,
     <U2 as Pow<N>>::Output: ArrayLength<f64>,
 {
@@ -54,8 +84,9 @@ impl<N: Unsigned> PartialEq for Multivector<N>
     }
 }
 
-impl<N: Unsigned> Default for Multivector<N>
+impl<N> Default for Multivector<N>
   where
+    N: Unsigned,
     U2: Pow<N>,
     <U2 as Pow<N>>::Output: ArrayLength<f64>,
     GenericArray<f64, <U2 as Pow<N>>::Output>: Default,
@@ -65,8 +96,22 @@ impl<N: Unsigned> Default for Multivector<N>
     }
 }
 
-impl<N: Unsigned> Zero for Multivector<N>
+#[derive(Default)]
+struct Empty;
+
+#[test]
+fn default_works() {
+    use typenum::U1;
+    GenericArray::<u8, U1>::default();
+    // let m = Multivector::<U10>::default();
+    // for v in m {
+    //     assert_eq!(0, v);
+    // }
+}
+
+impl<N> Zero for Multivector<N>
   where
+    N: Unsigned,
     U2: Pow<N>,
     <U2 as Pow<N>>::Output: ArrayLength<f64>,
     GenericArray<f64, <U2 as Pow<N>>::Output>: Default,
@@ -80,8 +125,21 @@ impl<N: Unsigned> Zero for Multivector<N>
     }
 }
 
-impl<N: Unsigned> Add for Multivector<N>
+impl<N> Identity<Additive> for Multivector<N>
   where
+    N: Unsigned,
+    U2: Pow<N>,
+    <U2 as Pow<N>>::Output: ArrayLength<f64>,
+    GenericArray<f64, <U2 as Pow<N>>::Output>: Default,
+{
+    fn identity() -> Self {
+        Self::default()
+    }
+}
+
+impl<N> Add for Multivector<N>
+  where
+    N: Unsigned,
     U2: Pow<N>,
     <U2 as Pow<N>>::Output: ArrayLength<f64>,
 {
@@ -95,8 +153,35 @@ impl<N: Unsigned> Add for Multivector<N>
     }
 }
 
-impl<N: Unsigned> AbstractMagma<Additive> for Multivector<N>
+impl<N> Neg for Multivector<N>
   where
+    N: Unsigned,
+    U2: Pow<N>,
+    <U2 as Pow<N>>::Output: ArrayLength<f64>,
+{
+    type Output = Self;
+    fn neg(mut self) -> Self::Output {
+        for v in self.0.iter_mut() {
+            *v = -*v;
+        }
+        self
+    }
+}
+
+impl<N> Inverse<Additive> for Multivector<N>
+  where
+    N: Unsigned,
+    U2: Pow<N>,
+    <U2 as Pow<N>>::Output: ArrayLength<f64>,
+{
+    fn inverse(&self) -> Self {
+        -self.clone()
+    }
+}
+
+impl<N> AbstractMagma<Additive> for Multivector<N>
+  where
+    N: Unsigned,
     U2: Pow<N>,
     <U2 as Pow<N>>::Output: ArrayLength<f64>,
 {
@@ -105,9 +190,65 @@ impl<N: Unsigned> AbstractMagma<Additive> for Multivector<N>
     }
 }
 
-impl<N: Unsigned> Index<usize> for Multivector<N>
-    where U2: Pow<N>,
-          <U2 as Pow<N>>::Output: ArrayLength<f64>,
+impl<N> Mul<f64> for Multivector<N>
+  where
+    N: Unsigned,
+    U2: Pow<N>,
+    <U2 as Pow<N>>::Output: ArrayLength<f64>,
+{
+    type Output = Multivector<N>;
+    fn mul(mut self, lhs: f64) -> Self::Output {
+        for v in self.0.iter_mut() {
+            *v *= lhs;
+        }
+        self
+    }
+}
+
+// TODO: Figure out why derive fails
+// impl<N> AbstractModule for Multivector<N>
+//   where
+//     N: Unsigned,
+//     U2: Pow<N>,
+//     <U2 as Pow<N>>::Output: ArrayLength<f64>,
+// {
+//     type AbstractRing = f64;
+//
+//     fn multiply_by(&self, r: Self::AbstractRing) -> Self {
+//         self.clone() * r
+//     }
+// }
+
+impl<N> Mul<Multivector<N>> for Multivector<N>
+  where
+    N: Unsigned,
+    U2: Pow<N>,
+    <U2 as Pow<N>>::Output: ArrayLength<f64>,
+{
+    type Output = Multivector<N>;
+    fn mul(self, lhs: Self) -> Self::Output {
+        unimplemented!();
+        // let (a0, b0) = (|| self.b0.clone(), || lhs.b0.clone());
+        // let (a1, b1) = (|| self.b1.0.clone(), || lhs.b1.0.clone());
+        // let (a2, b2) = (|| self.b1.1.clone(), || lhs.b1.1.clone());
+        // let (a3, b3) = (|| self.b2.clone(), || lhs.b2.clone());
+        // let p0 = a0()*b0() + a1()*b1() + a2()*b2() - a3()*b3();
+        // let p1 = a0()*b1() + a1()*b0() + a3()*b2() - a2()*b3();
+        // let p2 = a0()*b2() + a3()*b0() + a1()*b3() - a3()*b1();
+        // let p3 = a0()*b3() + a3()*b0() + a1()*b2() - a2()*b1();
+        // Geometric2 {
+        //     b0: p0,
+        //     b1: (p1, p2),
+        //     b2: p3,
+        // }
+    }
+}
+
+impl<N> Index<usize> for Multivector<N>
+  where
+    N: Unsigned,
+    U2: Pow<N>,
+    <U2 as Pow<N>>::Output: ArrayLength<f64>,
 {
     type Output = [f64];
     fn index(&self, n: usize) -> &Self::Output {
