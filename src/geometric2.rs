@@ -1,9 +1,12 @@
-use alga::general::{AbstractMagma, AbstractModule, Field, Identity, Inverse, Additive, Multiplicative};
-use num::{Zero, One};
+use alga::general::{
+    AbstractMagma, AbstractModule, Additive, Field, Identity, Multiplicative, TwoSidedInverse,
+};
+use num::{One, Zero};
 
 use std::ops::{Add, Mul, Neg};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Alga)]
+#[alga_traits(GroupAbelian(Additive), Where = "F: Field")]
 pub struct Geometric2<F: Field> {
     b0: F,
     b1: (F, F),
@@ -92,8 +95,8 @@ impl<F: Field> Neg for Geometric2<F> {
     }
 }
 
-impl<F: Field> Inverse<Additive> for Geometric2<F> {
-    fn inverse(&self) -> Self {
+impl<F: Field> TwoSidedInverse<Additive> for Geometric2<F> {
+    fn two_sided_inverse(&self) -> Self {
         -self.clone()
     }
 }
@@ -104,12 +107,12 @@ impl<F: Field> AbstractMagma<Additive> for Geometric2<F> {
     }
 }
 
-impl_abelian!(<Additive> for Geometric2<F> where F: Field);
+// impl_abelian!(<Additive> for Geometric2<F> where F: Field);
 
 impl<F: Field> Mul<F> for Geometric2<F> {
     type Output = Geometric2<F>;
     fn mul(self, lhs: F) -> Self::Output {
-        let mul = ||lhs.clone();
+        let mul = || lhs.clone();
         Geometric2 {
             b0: mul() * self.b0,
             b1: (mul() * self.b1.0, mul() * self.b1.1),
@@ -133,10 +136,10 @@ impl<F: Field> Mul<Geometric2<F>> for Geometric2<F> {
         let (a1, b1) = (|| self.b1.0.clone(), || lhs.b1.0.clone());
         let (a2, b2) = (|| self.b1.1.clone(), || lhs.b1.1.clone());
         let (a3, b3) = (|| self.b2.clone(), || lhs.b2.clone());
-        let p0 = a0()*b0() + a1()*b1() + a2()*b2() - a3()*b3();
-        let p1 = a0()*b1() + a1()*b0() + a3()*b2() - a2()*b3();
-        let p2 = a0()*b2() + a3()*b0() + a1()*b3() - a3()*b1();
-        let p3 = a0()*b3() + a3()*b0() + a1()*b2() - a2()*b1();
+        let p0 = a0() * b0() + a1() * b1() + a2() * b2() - a3() * b3();
+        let p1 = a0() * b1() + a1() * b0() + a3() * b2() - a2() * b3();
+        let p2 = a0() * b2() + a3() * b0() + a1() * b3() - a3() * b1();
+        let p3 = a0() * b3() + a3() * b0() + a1() * b2() - a2() * b1();
         Geometric2 {
             b0: p0,
             b1: (p1, p2),
@@ -166,7 +169,7 @@ impl<F: Field> AbstractMagma<Multiplicative> for Geometric2<F> {
 #[cfg(test)]
 mod test {
     use super::Geometric2 as G2;
-    use alga::general::{Identity, Additive, Multiplicative};
+    use alga::general::{Additive, Identity, Multiplicative};
 
     #[test]
     fn product_parallel_commutative() {

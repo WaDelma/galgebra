@@ -1,11 +1,10 @@
 //#![recursion_limit="128"]
+extern crate alga;
 extern crate num_traits as num;
 #[macro_use]
-extern crate alga;
-#[macro_use]
 extern crate alga_derive;
-extern crate typenum;
 extern crate generic_array;
+extern crate typenum;
 
 use alga::general::Operator;
 
